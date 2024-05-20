@@ -71,7 +71,7 @@ fn MaxHeap(comptime T: type) type {
                 // Get left child
                 var child = 2*cur;
 
-                // Check if child exists. If not, return.
+                // Check if left child exists. If not, return.
                 if (child > n) return;
 
                 // Check if right child exists, and if it is larger than left child. If so, select it.
