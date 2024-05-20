@@ -37,7 +37,10 @@ fn MaxHeap(comptime T: type) type {
         }
         
         pub fn push(self: *Self, v: *const T, p: i32) std.mem.Allocator.Error!void {
-            try self.elements.append(.{.element = v, .priority = p});
+            try self.elements.append(.{
+                .element = v, 
+                .priority = p
+            });
             const i = self.elements.items.len;
             self.bubbleUp(i-1);
         } 
@@ -63,17 +66,24 @@ fn MaxHeap(comptime T: type) type {
             const A = self.elements.items;
             const n = A.len-1;
 
-            // Get left child
-            var child = 2*i;
+            var cur = i;
+            while (true) {
+                // Get left child
+                var child = 2*cur;
 
-            // Check if right child exists, and if it is larger than left child. If so, select it.
-            if (child < n and A[child+1].priority > A[child].priority) 
-                child += 1;
+                // Check if child exists. If not, return.
+                if (child > n) return;
 
-            // Check if child exists, and if current is smaller than child. If so, we bubble down:
-            if (child <= n and A[i].priority < A[child].priority) {
-                self.swap( i, child);
-                self.bubbleDown(child);
+                // Check if right child exists, and if it is larger than left child. If so, select it.
+                if (child < n and A[child+1].priority > A[child].priority) 
+                    child += 1;
+
+                // Check if current is equal or larger than child. If so, we return. Else, we bubble down.
+                if (A[cur].priority >= A[child].priority) return;
+                
+                self.swap(cur, child);
+
+                cur = child;
             }
         }
 
@@ -81,9 +91,9 @@ fn MaxHeap(comptime T: type) type {
             const A = self.elements.items;
 
             // Check if current is not root and if it is bigger than parent. If so, bubble up:
-            if (i > 0 and A[i].priority > A[i / 2].priority) {
-                self.swap(i, i / 2);
-                self.bubbleUp(i / 2);
+            var cur = i;
+            while (cur > 0 and A[cur].priority > A[cur / 2].priority): (cur /= 2) {
+                self.swap(cur, cur / 2);
             }
         }
 
@@ -100,7 +110,6 @@ fn MaxHeap(comptime T: type) type {
 const testing_allocator = std.testing.allocator;
 
 test "heap sort" {
-
     const Record = struct {
         uuid: u128,
         name: [:0]const u8,
