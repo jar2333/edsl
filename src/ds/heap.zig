@@ -26,10 +26,23 @@ fn MaxHeap(comptime T: type) type {
 
         elements: std.ArrayList(Pair),
 
-        pub fn init(allocator: std.mem.Allocator) std.mem.Allocator.Error!Self {
+        pub fn init(allocator: std.mem.Allocator, initial: ?[]Pair) std.mem.Allocator.Error!Self {
+            if (initial) |pairs| {
+                const lst = std.ArrayList(Pair).fromOwnedSlice(allocator, pairs);
+                heapify(lst.items);
+                return .{
+                    .elements = lst,
+                };
+            }
             return .{
-                .elements = std.ArrayList(Pair).init(allocator),
+                .elements = std.ArrayList(Pair).init(allocator)
             };
+        }
+
+        fn heapify(A: []Pair) void {
+            for (A.len/2..0) |i| {
+                bubbleDown(A, i);
+            }
         }
 
         pub fn deinit(self: *Self) void {
@@ -42,7 +55,7 @@ fn MaxHeap(comptime T: type) type {
                 .priority = p
             });
             const i = self.elements.items.len;
-            self.bubbleUp(i-1);
+            bubbleUp(self.elements.items, i-1);
         } 
 
         pub fn pop(self: *Self) ?*const T {
@@ -53,7 +66,7 @@ fn MaxHeap(comptime T: type) type {
             self.elements.items[0] = self.elements.pop();
 
             if (self.elements.items.len > 0)
-                self.bubbleDown(0);
+                bubbleDown(self.elements.items, 0);
 
             return max;
         }
@@ -62,8 +75,7 @@ fn MaxHeap(comptime T: type) type {
             return self.elements.items[0];
         }
 
-        fn bubbleDown(self: *Self, i: usize) void {
-            const A = self.elements.items;
+        fn bubbleDown(A: []Pair, i: usize) void {
             const n = A.len-1;
 
             var cur = i;
@@ -81,24 +93,21 @@ fn MaxHeap(comptime T: type) type {
                 // Check if current is equal or larger than child. If so, we return. Else, we bubble down.
                 if (A[cur].priority >= A[child].priority) return;
                 
-                self.swap(cur, child);
+                swap(A, cur, child);
 
                 cur = child;
             }
         }
 
-        fn bubbleUp(self: *Self, i: usize) void {
-            const A = self.elements.items;
-
+        fn bubbleUp(A: []Pair, i: usize) void {
             // Check if current is not root and if it is bigger than parent. If so, bubble up:
             var cur = i;
             while (cur > 0 and A[cur].priority > A[cur / 2].priority): (cur /= 2) {
-                self.swap(cur, cur / 2);
+                swap(A, cur, cur / 2);
             }
         }
 
-        fn swap(self: *Self, i: usize, j: usize) void {
-            const A = self.elements.items;
+        fn swap(A: []Pair, i: usize, j: usize) void {
             const tmp = A[i];
             A[i] = A[j]; 
             A[j] = tmp;
@@ -116,7 +125,7 @@ test "heap sort" {
         priority: i32,
     };
 
-    var heap = try MaxHeap(Record).init(testing_allocator);
+    var heap = try MaxHeap(Record).init(testing_allocator, null);
     defer heap.deinit();
 
     const records = [_]Record{
