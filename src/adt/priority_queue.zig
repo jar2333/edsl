@@ -1,5 +1,7 @@
 const std = @import("std");
 
+const heap = @import("../ds/heap.zig");
+
 const Order = enum {
     ASC,
     DESC
@@ -12,16 +14,27 @@ const Implementation = enum {
 };
 
 const Options = struct {
-    order: Order = .DESC,
+    order: Order = .ASC,
     impl: Implementation = .HEAP,
 }; 
 
-fn PriorityQueue(comptime T: type, _: Options) type {
-    const Self = @This();
+pub fn PriorityQueue(comptime T: type, opt: Options) type {
+    if (opt.impl == .HEAP) {
+        return HeapPriorityQueue(T);
+    }
+    @compileError(std.fmt.comptimePrint("PriorityQueue with options {order={}, impl={}} not implemented.", .{opt.order, opt.impl}));
+}
 
+fn HeapPriorityQueue(T: type) type {
     return struct {
-        pub fn init() Self {
-            return .{};
+        const Self = @This();
+
+        heap: heap.MaxHeap(T),
+
+        pub fn init(allocator: std.mem.Allocator) Self {
+            return .{
+                .heap = heap.MaxHeap(T).init(allocator, null)
+            };
         }
 
         pub fn enqueue(_: *Self, _: T) !void {

@@ -15,7 +15,7 @@ const std = @import("std");
 /// References:
 /// - Foundations of Computer Science C Edition (A. Aho, J. D. Ullman)
 /// 
-fn MaxHeap(comptime T: type) type {
+pub fn MaxHeap(comptime T: type) type {
     return struct {
         const Self = @This();
 
